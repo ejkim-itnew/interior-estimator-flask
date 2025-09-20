@@ -10,4 +10,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Curl to Render
-        run: curl -s https://interior-estimator-flask.onrender.com > /dev/null
+        run: curl -s https://interior-estimator.onrender.com > /dev/null
+
