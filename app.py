@@ -32,5 +32,10 @@ def calculate():
             total += subtotal
     return jsonify({"총액": total, "상세": details})
 
+# app.py 맨 아래
 if __name__ == "__main__":
-    app.run(debug=True)
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    # host=0.0.0.0, port=$PORT 가 핵심
+    app.run(host="0.0.0.0", port=port)
+
