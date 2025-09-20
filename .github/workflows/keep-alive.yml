@@ -2,12 +2,17 @@ name: Keep Render Alive
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"   # 5분마다 (UTC). GitHub 지터 보정용으로 5분 권장
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Hit Render (home)
-        run: curl -fsS --retry 2 --max-time 10 "${{ secrets.KEEPALIVE_URL }}" -o /dev/null
+      - name: Ping Render and print status
+        run: |
+          URL="https://interior-estimator-flask.onrender.com/"
+          CODE=$(curl -sS -o /dev/null -w "%{http_code}" --retry 3 --max-time 15 "$URL")
+          echo "[keep-alive] $(date -u +"%Y-%m-%dT%H:%M:%SZ") -> $URL => HTTP $CODE"
+          # 실패해도 워크플로우를 실패로 만들지 말고 지나가게(간헐적 502 대비)
+          exit 0
