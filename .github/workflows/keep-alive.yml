@@ -3,12 +3,19 @@ name: Keep Render Alive
 on:
   schedule:
     - cron: "*/10 * * * *"   # 10분마다 실행 (UTC 기준)
-  workflow_dispatch:          # 수동 실행도 가능
+  workflow_dispatch:          # 수동 실행도 가능 (Actions 탭에서 Run workflow)
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Curl to Render
-        run: curl -s https://interior-estimator.onrender.com > /dev/null
+      - name: Hit Render (home)
+        run: curl -fsS https://interior-estimator-flask.onrender.com/ -o /dev/null
+
+      # 필요하면 다른 엔드포인트도 예열 가능
+      # - name: Warm calculate (optional)
+      #   run: curl -fsS --retry 2 --max-time 10 \
+      #        -H "Content-Type: application/json" \
+      #        -d '{"도배(㎡)":0}' \
+      #        https://interior-estimator-flask.onrender.com/calculate -o /dev/null
 
