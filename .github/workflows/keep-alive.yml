@@ -2,17 +2,29 @@ name: Keep Render Alive
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # 5분마다 (UTC). GitHub 지터 보정용으로 5분 권장
+    # 매 5분마다 실행
+    - cron: "*/5 * * * *"
+    # 오프셋 실행: 매 10분마다 2분 후 (지터 보정)
+    - cron: "2-59/10 * * * *"
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     steps:
-      - name: Ping Render and print status
+      - name: Ping Render /healthz with retries
+        shell: bash
         run: |
-          URL="https://interior-estimator-flask.onrender.com/"
-          CODE=$(curl -sS -o /dev/null -w "%{http_code}" --retry 3 --max-time 15 "$URL")
-          echo "[keep-alive] $(date -u +"%Y-%m-%dT%H:%M:%SZ") -> $URL => HTTP $CODE"
-          # 실패해도 워크플로우를 실패로 만들지 말고 지나가게(간헐적 502 대비)
+          URL="https://interior-estimator-flask.onrender.com/healthz"
+          echo "[keep-alive] $(date -u +"%Y-%m-%dT%H:%M:%SZ") -> $URL"
+          for i in 1 2 3; do
+            CODE=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 5 --max-time 15 "$URL" || true)
+            echo "  attempt $i: HTTP $CODE"
+            # 2xx 또는 3xx면 성공 처리 후 종료
+            [[ "${CODE:0:1}" =~ [23] ]] && exit 0
+            sleep 60
+          done
+          echo "  all attempts failed (likely waking)."
+          # Render가 깨어나느라 실패했더라도 워크플로우 자체는 실패로 표시하지 않음
           exit 0
